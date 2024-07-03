@@ -47,22 +47,17 @@ class Workspace {
     return [tx, ty, sx, sy];
   }
 
-  createCircle(x, y, color) {
+  createComponent(x, y, svgElement) {
     const componentGroup = document.createElementNS(SVG_NS, "g");
     componentGroup.setAttribute("draggable", "true");
+    componentGroup.setAttribute("id", crypto.randomUUID());
     this.setTransformation(componentGroup, x, y, 1, 1);
 
-    const circle = document.createElementNS(SVG_NS, "circle");
-    circle.setAttribute("cx", 40);
-    circle.setAttribute("cy", 40);
-    circle.setAttribute("r", 40);
-    circle.setAttribute("fill", color);
-
-    componentGroup.appendChild(circle);
+    componentGroup.appendChild(svgElement);
     this.svgMainGroup.appendChild(componentGroup);
   }
 
-  loadAsset(x, y, url) {
+  createFromURL(x, y, url) {
     let xhr = new XMLHttpRequest();
     
     xhr.open('GET', url, true);
@@ -74,12 +69,7 @@ class Workspace {
         let svgDoc = parser.parseFromString(xhr.responseText, 'image/svg+xml');
         var svgElement = svgDoc.documentElement;
 
-        const componentGroup = document.createElementNS(SVG_NS, "g");
-        componentGroup.setAttribute("draggable", "true");
-        this.setTransformation(componentGroup, x, y, 1, 1);
-
-        componentGroup.appendChild(svgElement);
-        this.svgMainGroup.appendChild(componentGroup);
+        this.createComponent(x, y, svgElement);
       }
     }.bind(this);
 

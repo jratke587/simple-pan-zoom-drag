@@ -12,7 +12,7 @@
             const workspace = new Workspace(
                 document.getElementById("canvas")
             );
-            workspace.loadAsset(52.5, 52.5, "images/chessboard.svg");
+            workspace.createFromURL(52.5, 52.5, "images/chessboard.svg");
             const pieces = [
                 ["rdt","ndt","bdt","qdt","kdt","bdt","ndt","rdt"],
                 ["pdt","pdt","pdt","pdt","pdt","pdt","pdt","pdt"],
@@ -22,7 +22,7 @@
             ];
             pieces.forEach((row, y) => {
                 row.forEach((symbol, x) => {
-                    workspace.loadAsset(60*(x+1), 60*(y+1), `images/chess${symbol}.svg`);
+                    workspace.createFromURL(60*(x+1), 60*(y+1), `images/chess${symbol}.svg`);
                 });
             });
         </script>
