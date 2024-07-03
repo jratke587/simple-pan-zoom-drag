@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <script src="draggable.js"></script>
+    </head>
+    <body>
+        <div id="canvas" style="position: fixed; width: 100%; height: 100%; left: 0; top: 0;"></div>
+        <script>
+            const workspace = new Workspace(
+                document.getElementById("canvas")
+            );
+            workspace.loadAsset(52.5, 52.5, "images/chessboard.svg");
+            const pieces = [
+                ["rdt","ndt","bdt","qdt","kdt","bdt","ndt","rdt"],
+                ["pdt","pdt","pdt","pdt","pdt","pdt","pdt","pdt"],
+                [],[],[],[],
+                ["plt","plt","plt","plt","plt","plt","plt","plt"],
+                ["rlt","nlt","blt","qlt","klt","blt","nlt","rlt"]
+            ];
+            pieces.forEach((row, y) => {
+                row.forEach((symbol, x) => {
+                    workspace.loadAsset(60*(x+1), 60*(y+1), `images/chess${symbol}.svg`);
+                });
+            });
+        </script>
+    </body>
+</html>
