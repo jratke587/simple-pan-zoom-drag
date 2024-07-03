@@ -102,13 +102,9 @@ class Workspace {
     e.preventDefault();
     this.isMouseDown = true;
     if (e.target == this.svgContainer) {
-        this.selectedElement = e.target;
+      this.selectedElement = e.target;
     } else {
-        let targetElement = e.target;
-        while (targetElement && !targetElement.getAttribute("draggable")) {
-            targetElement = targetElement.parentNode;
-        }
-        this.selectedElement = targetElement || null;
+      this.selectedElement = e.target.closest('[draggable]');
     }
   }
 
