@@ -27,8 +27,8 @@ class Component {
     this.setPosition(newX, newY)
   }
 
-  finishDrag() {
-    if(Math.hypot(this.tx-this.x, this.ty-this.y) > 1) {
+  finishMove() {
+    if(Math.hypot(this.tx-this.x, this.ty-this.y) >= 1) {
       this.x = this.tx;
       this.y = this.ty;
     } else {
@@ -38,6 +38,11 @@ class Component {
 
   deselect() {
     this.setPosition(this.x, this.y);
+    this.componentGroup.setAttribute("style","");
+  }
+
+  select() {
+    this.componentGroup.setAttribute("style","filter: drop-shadow(-1px -1px 0px #3e68ff) drop-shadow(1px -1px 0px #3e68ff) drop-shadow(1px 1px 0px #3e68ff) drop-shadow(-1px 1px 0px #3e68ff);");
   }
 
 }
@@ -58,7 +63,6 @@ class Workspace {
     document.addEventListener('mouseup', (e) => this.handleMouseUp(e));
     document.addEventListener('mousemove', (e) => this.handleMouseMove(e));
     document.addEventListener('keydown', (e) => this.handleKeypress(e));
-
 
     this.isMouseDown = false;
     this.isDraggingWorkspace = false;
@@ -114,24 +118,29 @@ class Workspace {
 
   handleMouseDown(e) {
     e.preventDefault();
+
     this.isMouseDown = true;
+    this.selectedComponent?.deselect();
     this.selectedComponent = null;
+    
     if (e.target == this.svgContainer) {
       this.isDraggingWorkspace = true;
     } else {
       const topElement = e.target.closest('[draggable]');
       if (topElement) {
         this.selectedComponent = this.components[topElement.getAttribute("id")];
+        this.selectedComponent.select();
       }
     }
   }
 
   handleMouseUp(e) {
     e.preventDefault();
+
     this.isMouseDown = false;
     this.isDraggingWorkspace = false;
     if (this.selectedComponent instanceof Component) {
-      this.selectedComponent.finishDrag();
+      this.selectedComponent.finishMove();
     }
   }
 
