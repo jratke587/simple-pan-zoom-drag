@@ -1,5 +1,47 @@
 const SVG_NS = "http://www.w3.org/2000/svg";
 
+class Component {
+  constructor(x, y, svgElement) {
+    this.id = crypto.randomUUID();
+
+    this.componentGroup = document.createElementNS(SVG_NS, "g");
+    this.componentGroup.setAttribute("draggable", "true");
+    this.componentGroup.setAttribute("id", this.id);
+
+    this.x = x;
+    this.y = y;
+    this.setPosition(x, y, false);
+
+    this.componentGroup.appendChild(svgElement);
+  }
+
+  setPosition(x, y) {
+    this.tx = x;
+    this.ty = y;
+    this.componentGroup.setAttribute("transform", `translate(${x}, ${y})`)
+  }
+
+  drag(movementX, movementY, scale) {
+    const newX = (movementX * 1/scale) + this.tx;
+    const newY = (movementY * 1/scale) + this.ty;
+    this.setPosition(newX, newY)
+  }
+
+  finishDrag() {
+    if(Math.hypot(this.tx-this.x, this.ty-this.y) > 1) {
+      this.x = this.tx;
+      this.y = this.ty;
+    } else {
+      this.setPosition(this.x, this.y);
+    }
+  }
+
+  deselect() {
+    this.setPosition(this.x, this.y);
+  }
+
+}
+
 class Workspace {
   constructor(canvasElement) {
     this.canvasElement = canvasElement;
@@ -15,46 +57,28 @@ class Workspace {
     canvasElement.addEventListener('mousedown', (e) => this.handleMouseDown(e));
     document.addEventListener('mouseup', (e) => this.handleMouseUp(e));
     document.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+    document.addEventListener('keydown', (e) => this.handleKeypress(e));
+
 
     this.isMouseDown = false;
-    this.selectedElement = null;
+    this.isDraggingWorkspace = false;
+    this.selectedComponent = null;
 
     this.scale = 1;
     this.translateX = 0;
     this.translateY = 0;
+
+    this.components = {};
   }
 
   setTransformation(element, tx, ty, sx, sy) {
     element.setAttribute("transform", `translate(${tx}, ${ty}), scale(${sx}, ${sy})`)
   }
 
-  getTransformation(element) {
-    let tx = 0, ty = 0, sx = 1, sy = 1;
-    Array.from(element.transform.baseVal).forEach((transformation) => {
-        switch(transformation.type) {
-            case SVGTransform.SVG_TRANSFORM_TRANSLATE:
-                tx = transformation.matrix.e;
-                ty = transformation.matrix.f;
-                break;
-            case SVGTransform.SVG_TRANSFORM_SCALE:
-                sx = transformation.matrix.a;
-                sy = transformation.matrix.d;
-                break;
-            default:
-                break;
-        }
-    });
-    return [tx, ty, sx, sy];
-  }
-
   createComponent(x, y, svgElement) {
-    const componentGroup = document.createElementNS(SVG_NS, "g");
-    componentGroup.setAttribute("draggable", "true");
-    componentGroup.setAttribute("id", crypto.randomUUID());
-    this.setTransformation(componentGroup, x, y, 1, 1);
-
-    componentGroup.appendChild(svgElement);
-    this.svgMainGroup.appendChild(componentGroup);
+    const component = new Component(x, y, svgElement);
+    this.svgMainGroup.appendChild(component.componentGroup);
+    this.components[component.id] = component;
   }
 
   createFromURL(x, y, url) {
@@ -91,29 +115,43 @@ class Workspace {
   handleMouseDown(e) {
     e.preventDefault();
     this.isMouseDown = true;
+    this.selectedComponent = null;
     if (e.target == this.svgContainer) {
-      this.selectedElement = e.target;
+      this.isDraggingWorkspace = true;
     } else {
-      this.selectedElement = e.target.closest('[draggable]');
+      const topElement = e.target.closest('[draggable]');
+      if (topElement) {
+        this.selectedComponent = this.components[topElement.getAttribute("id")];
+      }
     }
   }
 
   handleMouseUp(e) {
     e.preventDefault();
     this.isMouseDown = false;
-    this.selectedElement = null;
+    this.isDraggingWorkspace = false;
+    if (this.selectedComponent instanceof Component) {
+      this.selectedComponent.finishDrag();
+    }
   }
 
   handleMouseMove(e) {
-    if (this.isMouseDown && this.selectedElement == this.svgContainer) {
-        this.translateX += e.movementX;
-        this.translateY += e.movementY;
-        this.setTransformation(this.svgMainGroup, this.translateX, this.translateY, this.scale, this.scale);
-    } else if (this.isMouseDown && this.selectedElement) {
-        const transformations = this.getTransformation(this.selectedElement);
-        const newX = (e.movementX * 1/this.scale) + transformations[0];
-        const newY = (e.movementY * 1/this.scale) + transformations[1];
-        this.setTransformation(this.selectedElement, newX, newY, transformations[2], transformations[3]);
+    if (this.isDraggingWorkspace) {
+      this.translateX += e.movementX;
+      this.translateY += e.movementY;
+      this.setTransformation(this.svgMainGroup, this.translateX, this.translateY, this.scale, this.scale);
+    } else if (this.isMouseDown && this.selectedComponent instanceof Component) {
+      this.selectedComponent.drag(e.movementX, e.movementY, this.scale);
+    }
+  }
+
+  handleKeypress(e) {
+    if (e.keyCode === 27 && this.selectedComponent instanceof Component) { //esc key pressed
+      this.selectedComponent.deselect();
+      this.selectedComponent = null;
+      this.isMouseDown = false;
+    } else if ((e.ctrlKey || e.metaKey) && e.key === 'z') { //ctrl + z
+
     }
   }
 }
